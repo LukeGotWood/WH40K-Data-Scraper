@@ -1,7 +1,8 @@
-import { createWriteStream } from "fs";
+import { createWriteStream, writeFile } from "fs";
 import { pipeline } from "stream";
 import { promisify } from "util";
 import fetch from "node-fetch";
+import csvtojson from "csvtojson";
 
 const downloadFile = async ({ url, path }) => {
   const streamPipeline = promisify(pipeline);
@@ -17,6 +18,7 @@ const downloadFile = async ({ url, path }) => {
 
 const wahapedia_csv_baseurl = "https://wahapedia.ru/wh40k9ed/";
 const wahapedia_csv_folder = "./wahapedia-csv/";
+const wahapedia_json_folder = "./wahapedia-json/";
 const wahapedia_csv_filenames = [
   "Factions.csv",
   "Source.csv",
@@ -47,5 +49,25 @@ wahapedia_csv_filenames.forEach((filename) => {
     } catch (err) {
       console.log(err);
     }
+
+    csvtojson({
+      delimiter: "|",
+    })
+      .fromFile(wahapedia_csv_folder + filename)
+      .then((obj) => {
+        writeFile(
+          wahapedia_json_folder + filename,
+          JSON.stringify(obj, null, 4),
+          (err) => {
+            if (err) {
+              throw err;
+            }
+          }
+        );
+      })
+      .catch((err) => {
+        // log error if any
+        console.log(err);
+      });
   })();
 });
