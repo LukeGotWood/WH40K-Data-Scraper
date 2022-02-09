@@ -1,0 +1,11 @@
+{
+  "name": "wh40k-data-scraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "csvtojson": "^2.0.10",
+    "node-fetch": "^3.2.0"
+  }
+}
