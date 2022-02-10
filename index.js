@@ -20,43 +20,48 @@ const wahapedia_csv_baseurl = "https://wahapedia.ru/wh40k9ed/";
 const wahapedia_csv_folder = "./wahapedia-csv/";
 const wahapedia_json_folder = "./wahapedia-json/";
 const wahapedia_csv_filenames = [
-  "Factions.csv",
-  "Source.csv",
-  "Datasheets.csv",
-  "Datasheets_abilities.csv",
-  "Datasheets_damage.csv",
-  "Datasheets_keywords.csv",
-  "Datasheets_models.csv",
-  "Datasheets_options.csv",
-  "Datasheets_wargear.csv",
-  "Datasheets_stratagems.csv",
-  "Wargear.csv",
-  "Wargear_list.csv",
-  "Stratagems.csv",
-  "StratagemPhases.csv",
-  "Abilities.csv",
-  "Warlord_traits.csv",
-  "PsychicPowers.csv",
+  "Factions",
+  "Source",
+  "Datasheets",
+  "Datasheets_abilities",
+  "Datasheets_damage",
+  "Datasheets_keywords",
+  "Datasheets_models",
+  "Datasheets_options",
+  "Datasheets_wargear",
+  "Datasheets_stratagems",
+  "Wargear",
+  "Wargear_list",
+  "Stratagems",
+  "StratagemPhases",
+  "Abilities",
+  "Warlord_traits",
+  "PsychicPowers",
 ];
 
 wahapedia_csv_filenames.forEach((filename) => {
   (async () => {
     try {
       await downloadFile({
-        url: wahapedia_csv_baseurl + filename,
-        path: wahapedia_csv_folder + filename,
+        url: wahapedia_csv_baseurl + filename + ".csv",
+        path: wahapedia_csv_folder + filename + ".csv",
       });
     } catch (err) {
       console.log(err);
     }
 
+    let jsonObj = [];
+
     csvtojson({
-      delimiter: "|",
+      delimiter: "|"
     })
-      .fromFile(wahapedia_csv_folder + filename)
+      .fromFile(wahapedia_csv_folder + filename + ".csv")
+      .preFileLine((fileLineString, lineIdx) => {
+          return fileLineString.slice(0, -1);
+      })
       .then((obj) => {
         writeFile(
-          wahapedia_json_folder + filename,
+          wahapedia_json_folder + filename + ".json",
           JSON.stringify(obj, null, 4),
           (err) => {
             if (err) {
@@ -66,7 +71,6 @@ wahapedia_csv_filenames.forEach((filename) => {
         );
       })
       .catch((err) => {
-        // log error if any
         console.log(err);
       });
   })();
