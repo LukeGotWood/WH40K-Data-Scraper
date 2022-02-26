@@ -82,27 +82,52 @@ let files = wahapedia_csv_filenames.map((filename) => {
 Promise.all(files).then(() => {
   // Cleaning
 
-  // Stratagems.json
+  // Factions.json
   (async () => {
-    await readFile("./wahapedia-json/Stratagems.json", (err, data) => {
+    await readFile("./wahapedia-json/Factions.json", (err, dataRaw) => {
       if (err) {
         throw err;
       }
 
-      let stratagems = JSON.parse(data);
+      let data = JSON.parse(dataRaw);
 
-      let stratagemsCleaned = stratagems.map((stratagem) => {
-        stratagem.description = stratagem.description.replace(
-          /(<([^>]+)>)/gi,
-          ""
-        );
-        return stratagem;
+      let dataCleaned = data.map((d) => {
+        delete d["Ссылка"];
+        delete d["link"];
+        return d;
       });
 
-      let stratagemsCleanedRaw = JSON.stringify(stratagemsCleaned, null, 4);
+      let dataCleanedRaw = JSON.stringify(dataCleaned, null, 4);
+      writeFile(
+        "./wahapedia-json-cleaned/Factions.json",
+        dataCleanedRaw,
+        (err) => {
+          if (err) {
+            throw err;
+          }
+        }
+      );
+    });
+  })();
+
+  // Stratagems.json
+  (async () => {
+    await readFile("./wahapedia-json/Stratagems.json", (err, dataRaw) => {
+      if (err) {
+        throw err;
+      }
+
+      let data = JSON.parse(dataRaw);
+
+      let dataCleaned = data.map((d) => {
+        d.description = d["description"].replace(/(<([^>]+)>)/gi, "");
+        return d;
+      });
+
+      let dataCleanedRaw = JSON.stringify(dataCleaned, null, 4);
       writeFile(
         "./wahapedia-json-cleaned/Stratagems.json",
-        stratagemsCleanedRaw,
+        dataCleanedRaw,
         (err) => {
           if (err) {
             throw err;
