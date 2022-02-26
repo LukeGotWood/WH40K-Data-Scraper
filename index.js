@@ -1,4 +1,4 @@
-import { createWriteStream, writeFile } from "fs";
+import { createWriteStream, readFile, writeFile } from "fs";
 import { pipeline } from "stream";
 import { promisify } from "util";
 import fetch from "node-fetch";
@@ -39,39 +39,76 @@ const wahapedia_csv_filenames = [
   "PsychicPowers",
 ];
 
-wahapedia_csv_filenames.forEach((filename) => {
-  (async () => {
-    try {
-      await downloadFile({
-        url: wahapedia_csv_baseurl + filename + ".csv",
-        path: wahapedia_csv_folder + filename + ".csv",
-      });
-    } catch (err) {
-      console.log(err);
-    }
-
-    let jsonObj = [];
-
-    csvtojson({
-      delimiter: "|"
-    })
-      .fromFile(wahapedia_csv_folder + filename + ".csv")
-      .preFileLine((fileLineString, lineIdx) => {
-          return fileLineString.slice(0, -1);
-      })
-      .then((obj) => {
-        writeFile(
-          wahapedia_json_folder + filename + ".json",
-          JSON.stringify(obj, null, 4),
-          (err) => {
-            if (err) {
-              throw err;
-            }
-          }
-        );
-      })
-      .catch((err) => {
+let files = wahapedia_csv_filenames.map((filename) => {
+  return new Promise((resolve) => {
+    (async () => {
+      //   Download CSV files
+      try {
+        await downloadFile({
+          url: wahapedia_csv_baseurl + filename + ".csv",
+          path: wahapedia_csv_folder + filename + ".csv",
+        });
+      } catch (err) {
         console.log(err);
+      }
+
+      // csv => json
+      csvtojson({
+        delimiter: "|",
+      })
+        .fromFile(wahapedia_csv_folder + filename + ".csv")
+        .preFileLine((fileLineString, lineIdx) => {
+          return fileLineString.slice(0, -1);
+        })
+        .then((obj) => {
+          writeFile(
+            wahapedia_json_folder + filename + ".json",
+            JSON.stringify(obj, null, 4),
+            (err) => {
+              if (err) {
+                throw err;
+              }
+            }
+          );
+          resolve();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    })();
+  });
+});
+
+Promise.all(files).then(() => {
+  // Cleaning
+
+  // Stratagems.json
+  (async () => {
+    await readFile("./wahapedia-json/Stratagems.json", (err, data) => {
+      if (err) {
+        throw err;
+      }
+
+      let stratagems = JSON.parse(data);
+
+      let stratagemsCleaned = stratagems.map((stratagem) => {
+        stratagem.description = stratagem.description.replace(
+          /(<([^>]+)>)/gi,
+          ""
+        );
+        return stratagem;
       });
+
+      let stratagemsCleanedRaw = JSON.stringify(stratagemsCleaned, null, 4);
+      writeFile(
+        "./wahapedia-json-cleaned/Stratagems.json",
+        stratagemsCleanedRaw,
+        (err) => {
+          if (err) {
+            throw err;
+          }
+        }
+      );
+    });
   })();
 });
